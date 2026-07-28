@@ -53,7 +53,32 @@ export function generateAttachmentId(): string {
 
 // ==================== CORE ENTITIES ====================
 
-export type Gender = 'male' | 'female';
+/**
+ * Recorded gender/sex value. `unknown` means the evidence does not establish a
+ * value; `other` preserves an explicit value outside the legacy binary pair.
+ */
+export type Gender = 'male' | 'female' | 'other' | 'unknown';
+
+export type CalendarSystem = 'gregorian' | 'solar-hijri' | 'unknown';
+export type DatePrecision = 'day' | 'month' | 'year' | 'range' | 'unknown';
+export type DateQualifier = 'exact' | 'about' | 'before' | 'after' | 'between' | 'unknown';
+
+/**
+ * Optional structured evidence alongside Strom's existing date string. `raw`
+ * is the exact evidenced text and must be preserved; the first-class date
+ * field remains the app's display/input value and may intentionally differ.
+ * `normalized` is sortable within the named calendar, never a replacement for
+ * either raw representation.
+ */
+export interface DateEvidence {
+    raw: string;
+    calendar: CalendarSystem;
+    precision: DatePrecision;
+    qualifier: DateQualifier;
+    normalized?: string;
+    endRaw?: string;
+    endNormalized?: string;
+}
 
 export type PartnershipStatus = 'married' | 'partners' | 'divorced' | 'separated';
 
@@ -107,6 +132,7 @@ export interface LifeEvent {
     customLabel?: string;
     /** Flex date (see src/dates.ts): [~|<|>]YYYY[-MM[-DD]]. */
     date?: string;
+    dateEvidence?: DateEvidence;
     place?: string;
     note?: string;
     /** Ids of Source entries (StromData.sources) citing this event. */
@@ -165,8 +191,10 @@ export interface Person {
     childIds: PersonId[];
     // Extended info
     birthDate?: string;
+    birthDateEvidence?: DateEvidence;
     birthPlace?: string;
     deathDate?: string;
+    deathDateEvidence?: DateEvidence;
     deathPlace?: string;
     notes?: string;
     /**
@@ -249,8 +277,10 @@ export interface Partnership {
     // married/divorced: "Datum sňatku" / "Datum rozvodu"
     // partners/separated: "Začátek vztahu" / "Konec vztahu"
     startDate?: string;
+    startDateEvidence?: DateEvidence;
     startPlace?: string;
     endDate?: string;
+    endDateEvidence?: DateEvidence;
     note?: string;
     /** Ids of Source entries citing this partnership (marriage record etc.). */
     sourceIds?: string[];
@@ -272,10 +302,12 @@ export type LastFocusedMarker = typeof LAST_FOCUSED;
  * citation ids (Person.sourceIds, LifeEvent.sourceIds).
  * v4 (2026-07): added Person.attachments (inline documents).
  * v5 (2026-07): added Person.parentRelTypes (adoptive/step/foster links).
+ * v6 (2026-07): added other/unknown gender values and optional structured
+ * date evidence with calendar, precision and qualifier provenance.
  * All additive/backward-compatible for reading; the bump makes an older app
  * warn ("newer version") before it silently drops the new fields on re-save.
  */
-export const STROM_DATA_VERSION = 5;
+export const STROM_DATA_VERSION = 6;
 
 /**
  * Coordinates of one place, kept in the tree's own file so a place is looked up

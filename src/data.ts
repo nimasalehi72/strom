@@ -44,6 +44,7 @@ import { createSnapshot, getSnapshotJson, SnapshotReason } from './snapshots.js'
 import { ValidationIssue } from './validation.js';
 import { UndoManager } from './undo.js';
 import { applyLivingPrivacy, applyContentOptions, ContentOptions, PrivacyMode } from './privacy.js';
+import { assertGraphInvariants, rebuildDerivedGraphIndexes } from './graph-invariants.js';
 
 /** Extended updates for Partnership */
 type PartnershipUpdates = Partial<Pick<Partnership, 'status' | 'startDate' | 'startPlace' | 'endDate' | 'note' | 'isPrimary'>>;
@@ -76,9 +77,17 @@ export function auditPersonName(person: Person | null | undefined): string {
 /** A brand-new, empty tree. */
 export function createEmptyData(): StromData {
     return {
+        version: STROM_DATA_VERSION,
         persons: {} as Record<PersonId, Person>,
         partnerships: {} as Record<PartnershipId, Partnership>
     };
+}
+
+export class FutureSchemaError extends Error {
+    constructor(public readonly foundVersion: number, public readonly supportedVersion: number) {
+        super(`Tree schema ${foundVersion} is newer than supported schema ${supportedVersion}`);
+        this.name = 'FutureSchemaError';
+    }
 }
 
 /**
@@ -100,8 +109,22 @@ export function migrateData(data: unknown): StromData {
         return createEmptyData();
     }
 
-    const d = data as Record<string, unknown>;
+    const source = structuredClone(data) as Record<string, unknown>;
+    const sourceVersion = typeof source.version === 'number' ? source.version : 1;
+    if (sourceVersion > STROM_DATA_VERSION) {
+        throw new FutureSchemaError(sourceVersion, STROM_DATA_VERSION);
+    }
+    const d = source;
+    const persons = (d.persons || {}) as Record<PersonId, Person>;
     const partnerships = (d.partnerships || {}) as Record<PartnershipId, Partnership>;
+
+    for (const person of Object.values(persons)) {
+        person.parentIds ??= [];
+        person.childIds ??= [];
+        person.partnerships ??= [];
+        person.isPlaceholder ??= false;
+        if (!['male', 'female', 'other', 'unknown'].includes(person.gender)) person.gender = 'unknown';
+    }
 
     // Migrate partnerships without status field
     for (const partnership of Object.values(partnerships)) {
@@ -115,7 +138,8 @@ export function migrateData(data: unknown): StromData {
     // data needs no transformation; the version is re-stamped on next save.
 
     const result: StromData = {
-        persons: (d.persons || {}) as Record<PersonId, Person>,
+        version: STROM_DATA_VERSION,
+        persons,
         partnerships
     };
 
@@ -150,6 +174,14 @@ export function migrateData(data: unknown): StromData {
     }
 
     return result;
+}
+
+/** Strict load/commit boundary: migrate a clone, then prove graph integrity. */
+export function migrateAndValidateData(data: unknown): StromData {
+    const migrated = migrateData(data);
+    rebuildDerivedGraphIndexes(migrated);
+    assertGraphInvariants(migrated);
+    return migrated;
 }
 
 class DataManagerClass {
@@ -276,13 +308,13 @@ class DataManagerClass {
             // Tree from this export already exists - UI will show choice dialog
             // For now, enter view mode - UI will handle showing the dialog
             this.viewMode = true;
-            this.data = migrateData(data);
+            this.data = migrateAndValidateData(data);
             // Set current tree to null in view mode (not editing any localStorage tree)
             this.currentTreeId = null;
         } else {
             // New export - enter view mode
             this.viewMode = true;
-            this.data = migrateData(data);
+            this.data = migrateAndValidateData(data);
             this.currentTreeId = null;
         }
     }
@@ -398,7 +430,7 @@ class DataManagerClass {
         if (!tree) return false;
 
         this.activeEmbeddedTreeId = treeId;
-        this.data = migrateData(tree.data);
+        this.data = migrateAndValidateData(tree.data);
 
         if (typeof window !== 'undefined') window.dispatchEvent(new CustomEvent('strom:data-changed'));
         return true;
@@ -459,7 +491,7 @@ class DataManagerClass {
         if (this.embeddedAllTrees) {
             for (const [, tree] of Object.entries(this.embeddedAllTrees)) {
                 const name = this.getUniqueTreeName(tree.name, existingNames);
-                const newTreeId = TreeManager.createTreeFromImport(migrateData(tree.data), name);
+                const newTreeId = TreeManager.createTreeFromImport(migrateAndValidateData(tree.data), name);
                 // Apply isHidden flag if it was set in the export
                 if (tree.isHidden) {
                     TreeManager.setTreeVisibility(newTreeId, true);
@@ -615,7 +647,22 @@ class DataManagerClass {
         // Load data in view mode - import will be blocked
         this.viewMode = true;
         this.importBlockedDueToVersion = true;
-        this.data = migrateData(this.pendingNewerVersionData);
+        const preview = structuredClone(this.pendingNewerVersionData);
+        for (const person of Object.values(preview.persons ?? {})) {
+            person.parentIds ??= [];
+            person.childIds ??= [];
+            person.partnerships ??= [];
+            person.isPlaceholder ??= false;
+            if (!['male', 'female', 'other', 'unknown'].includes(person.gender)) person.gender = 'unknown';
+        }
+        preview.partnerships ??= {} as Record<PartnershipId, Partnership>;
+        for (const partnership of Object.values(preview.partnerships)) {
+            partnership.childIds ??= [];
+            partnership.status ??= 'married';
+        }
+        rebuildDerivedGraphIndexes(preview);
+        assertGraphInvariants(preview);
+        this.data = preview;
         this.currentTreeId = null;
 
         // Clear pending state
@@ -698,7 +745,16 @@ class DataManagerClass {
 
             const treeData = await TreeManager.getTreeData(startupTreeId);
             if (treeData) {
-                this.data = migrateData(treeData);
+                const dataVersion = treeData.version ?? 1;
+                if (dataVersion > STROM_DATA_VERSION) {
+                    this.pendingNewerVersionData = treeData;
+                    this.pendingNewerVersionInfo = { dataVersion, appVersion: 'unknown' };
+                    this.newerVersionSource = 'storage';
+                    this.currentTreeId = startupTreeId;
+                    this.data = this.createEmptyData();
+                    return;
+                }
+                this.data = await this.prepareStoredTree(startupTreeId, treeData);
                 return;
             }
         }
@@ -706,6 +762,26 @@ class DataManagerClass {
         // No startup tree or tree data not found - create empty data
         this.currentTreeId = TreeManager.getActiveTreeId();
         this.data = this.createEmptyData();
+    }
+
+    /**
+     * Strict storage load with a verified pre-upgrade snapshot. The old bytes
+     * are kept outside the tree record before schema v6 is ever persisted.
+     */
+    private async prepareStoredTree(treeId: TreeId, treeData: StromData): Promise<StromData> {
+        const version = treeData.version ?? 1;
+        if (version > STROM_DATA_VERSION) throw new FutureSchemaError(version, STROM_DATA_VERSION);
+        if (version === STROM_DATA_VERSION) return migrateAndValidateData(treeData);
+
+        const expected = JSON.stringify(treeData);
+        const snapshot = await createSnapshot(treeId, treeData, 'pre-upgrade', Date.now());
+        const verified = await getSnapshotJson(snapshot.id);
+        if (verified !== expected) throw new Error('Pre-upgrade snapshot verification failed');
+
+        const migrated = migrateAndValidateData(treeData);
+        TreeManager.saveTreeData(treeId, migrated);
+        await TreeManager.flushSaves();
+        return migrated;
     }
 
     /**
@@ -730,7 +806,7 @@ class DataManagerClass {
         this.currentTreeId = treeId;
         const treeData = await TreeManager.getTreeData(treeId);
         if (treeData) {
-            this.data = migrateData(treeData);
+            this.data = await this.prepareStoredTree(treeId, treeData);
         } else {
             this.data = this.createEmptyData();
         }
@@ -754,7 +830,7 @@ class DataManagerClass {
 
         const treeData = await TreeManager.getTreeData(this.currentTreeId);
         if (treeData) {
-            this.data = migrateData(treeData);
+            this.data = await this.prepareStoredTree(this.currentTreeId, treeData);
         } else {
             this.data = this.createEmptyData();
         }
@@ -803,6 +879,13 @@ class DataManagerClass {
      */
     private commitMutation(description: string, silent = false): void {
         if (this.batchActive) return;
+        try {
+            assertGraphInvariants(this.data);
+        } catch (error) {
+            if (this.pendingBefore) this.data = this.pendingBefore;
+            this.pendingBefore = null;
+            throw error;
+        }
         UndoManager.setActiveTree(this.currentTreeId);
         if (this.pendingBefore) {
             // Auto-backup the FIRST mutation of the day (state before it).
@@ -882,7 +965,7 @@ class DataManagerClass {
         if (this.viewMode || !this.currentTreeId) return false;
         const json = await getSnapshotJson(snapshotId);
         if (!json) return false;
-        const migrated = migrateData(JSON.parse(json));
+        const migrated = migrateAndValidateData(JSON.parse(json));
 
         this.beginMutation();
         this.data = migrated;
@@ -1638,6 +1721,13 @@ class DataManagerClass {
             }
         }
 
+        // A child does not carry its family-unit memberships as a reverse
+        // index, so remove it from every partnership explicitly before the
+        // person record disappears.
+        for (const partnership of Object.values(this.data.partnerships)) {
+            partnership.childIds = partnership.childIds.filter(childId => childId !== id);
+        }
+
         // A linked godparent/witness in anyone's event keeps their written name
         // instead of a dangling id — the record loses the link, not the fact.
         // (Same contract as merge and split.)
@@ -1804,28 +1894,32 @@ class DataManagerClass {
         const child = this.data.persons[childId];
         if (!parent || !child) return false;
 
+        const partnership = partnershipId ? this.data.partnerships[partnershipId] : undefined;
+        if (partnershipId && (!partnership ||
+            (partnership.person1Id !== parentId && partnership.person2Id !== parentId))) return false;
+
         // Block if either person is locked
         if (this.isPersonLocked(parentId) || this.isPersonLocked(childId)) return false;
+        if (partnership) {
+            const otherId = partnership.person1Id === parentId ? partnership.person2Id : partnership.person1Id;
+            if (this.isPersonLocked(otherId)) return false;
+        }
 
         this.beginMutation();
 
-        // Add to parent's childIds if not already there
-        if (!parent.childIds.includes(childId)) {
-            parent.childIds.push(childId);
+        // Attributing a child to a two-person family unit is one atomic graph
+        // operation: both partner edges must exist at every commit boundary.
+        // Without a partnership this remains a single parent edge, and any
+        // number of additional parent figures may be added independently.
+        const parents = partnership
+            ? [partnership.person1Id, partnership.person2Id]
+            : [parentId];
+        for (const id of parents) {
+            const figure = this.data.persons[id];
+            if (!figure.childIds.includes(childId)) figure.childIds.push(childId);
+            if (!child.parentIds.includes(id)) child.parentIds.push(id);
         }
-
-        // Add to child's parentIds if not already there (max 2 parents)
-        if (!child.parentIds.includes(parentId) && child.parentIds.length < 2) {
-            child.parentIds.push(parentId);
-        }
-
-        // If partnership specified, add child to partnership
-        if (partnershipId) {
-            const partnership = this.data.partnerships[partnershipId];
-            if (partnership && !partnership.childIds.includes(childId)) {
-                partnership.childIds.push(childId);
-            }
-        }
+        if (partnership && !partnership.childIds.includes(childId)) partnership.childIds.push(childId);
 
         this.commitMutation(strings.undo.addRelation(auditPersonName(parent), auditPersonName(child)));
         // Audit log
@@ -2264,7 +2358,7 @@ class DataManagerClass {
         // Undo choke point (see clearData) — an accidental import-over is
         // now one Ctrl+Z away instead of silently corrupting the stack.
         this.beginMutation();
-        this.data = migrateData(newData);
+        this.data = migrateAndValidateData(newData);
         this.commitMutation(strings.undo.loadedData, true);
         // Audit log
         const personCount = Object.keys(this.data.persons).length;
@@ -2301,7 +2395,7 @@ class DataManagerClass {
      * @returns The new tree's ID
      */
     async importAsNewTree(data: StromData, treeName: string): Promise<TreeId> {
-        const migratedData = migrateData(data);
+        const migratedData = migrateAndValidateData(data);
         const treeId = TreeManager.createTreeFromImport(migratedData, treeName);
         this.currentTreeId = treeId;
         this.data = migratedData;
@@ -2493,9 +2587,9 @@ class DataManagerClass {
             keepPerson.isPlaceholder = false;
         }
 
-        // 2. Transfer parentIds (max 2 parents)
+        // 2. Transfer every distinct parent figure.
         for (const parentId of removePerson.parentIds) {
-            if (!keepPerson.parentIds.includes(parentId) && keepPerson.parentIds.length < 2) {
+            if (!keepPerson.parentIds.includes(parentId)) {
                 keepPerson.parentIds.push(parentId);
                 // Update parent's childIds
                 const parent = this.data.persons[parentId];
@@ -2726,7 +2820,7 @@ class DataManagerClass {
                             }
 
                             this.beginMutation();
-                            this.data = migrateData(data);
+                            this.data = migrateAndValidateData(data);
                             this.commitMutation(strings.undo.loadedData, true);
                             if (typeof window !== 'undefined') window.dispatchEvent(new CustomEvent('strom:data-changed'));
                         } catch {
@@ -2742,7 +2836,7 @@ class DataManagerClass {
                 }
 
                 this.beginMutation();
-                this.data = migrateData(imported);
+                this.data = migrateAndValidateData(imported);
                 this.commitMutation(strings.undo.loadedData, true);
                 // Dispatch event for UI to re-render
                 if (typeof window !== 'undefined') window.dispatchEvent(new CustomEvent('strom:data-changed'));
@@ -2899,7 +2993,7 @@ class DataManagerClass {
                 if (!parentId || !childId) break;
                 const child = this.data.persons[childId];
                 if (!child) break;
-                if (!child.parentIds.includes(parentId) && child.parentIds.length < 2) {
+                if (!child.parentIds.includes(parentId)) {
                     child.parentIds.push(parentId);
                     repaired = true;
                 }

@@ -648,6 +648,12 @@ export const importExportMethods = uiModule({
             return;
         }
 
+        const { isCompleteArchive } = await import('../complete-archive.js');
+        if (isCompleteArchive(parsed)) {
+            await this.restoreCompleteArchiveAsNew(parsed);
+            return;
+        }
+
         const result = validateJsonImport(content);
         if (!result.valid) {
             this.showValidationDialog(result);
@@ -730,6 +736,16 @@ export const importExportMethods = uiModule({
         try {
             const { decrypt } = await import('../crypto.js');
             const decrypted = await decrypt(this.pendingEncryptedImport, password);
+
+            const parsed = JSON.parse(decrypted) as unknown;
+            const { isCompleteArchive } = await import('../complete-archive.js');
+            if (isCompleteArchive(parsed)) {
+                document.getElementById('password-prompt-modal')?.classList.remove('active');
+                this.passwordPromptCallbackManagesDialog = false;
+                this.pendingEncryptedImport = null;
+                await this.restoreCompleteArchiveAsNew(parsed);
+                return;
+            }
 
             // Success - close dialog and reset flag
             document.getElementById('password-prompt-modal')?.classList.remove('active');
@@ -1194,5 +1210,58 @@ export const importExportMethods = uiModule({
             a.click();
             URL.revokeObjectURL(a.href);
         }, true);
+    },
+
+    /** Download the M1 verified, self-contained recovery archive. */
+    async exportCompleteArchive(): Promise<void> {
+        this.closeExportAllDialog();
+        this.showExportPasswordDialog(async (password: string | null) => {
+            try {
+                const { createCompleteArchiveFromStorage, serializeCompleteArchive } = await import('../complete-archive.js');
+                const archive = await createCompleteArchiveFromStorage();
+                const content = await serializeCompleteArchive(archive, password);
+                const blob = new Blob([content], { type: 'application/json' });
+                const a = document.createElement('a');
+                a.href = URL.createObjectURL(blob);
+                a.download = `strom-complete-archive-${new Date().toISOString().slice(0, 10)}.json`;
+                a.click();
+                URL.revokeObjectURL(a.href);
+            } catch (error) {
+                this.showAlert(error instanceof Error ? error.message : String(error), 'error');
+            }
+        }, false, { content: false, privacy: false, requirePassword: true });
+    },
+
+    /** Safe default: verify first, then restore trees under new IDs. */
+    async restoreCompleteArchiveAsNew(archive: import('../complete-archive.js').CompleteArchive): Promise<void> {
+        try {
+            const {
+                verifyCompleteArchive, planArchiveRestoreAsNew, executeArchiveRestore,
+            } = await import('../complete-archive.js');
+            const { StorageManager } = await import('../storage.js');
+            const verification = await verifyCompleteArchive(archive);
+            if (!verification.valid) throw new Error(verification.errors.join(', '));
+            const confirmed = await this.showConfirm(
+                strings.treeManager.restoreCompleteArchiveConfirm(
+                    verification.treeCount, verification.attachmentCount,
+                ),
+            );
+            if (!confirmed) return;
+            const plan = await planArchiveRestoreAsNew(
+                archive, await StorageManager.entries('trees'),
+            );
+            await executeArchiveRestore(plan);
+            this.showToast(strings.treeManager.restoreCompleteArchiveDone);
+            // The URL normally bookmarks the currently open tree by slug. It
+            // still points at the pre-restore tree here and would override the
+            // new active-tree pointer during startup, so let the restored
+            // index choose the tree and allow startup to write its new slug.
+            const url = new URL(window.location.href);
+            url.searchParams.delete('tree');
+            window.history.replaceState({}, '', url);
+            window.location.reload();
+        } catch (error) {
+            this.showAlert(error instanceof Error ? error.message : String(error), 'error');
+        }
     },
 });

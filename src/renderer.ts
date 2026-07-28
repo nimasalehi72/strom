@@ -1134,7 +1134,7 @@ class TreeRendererClass {
                 `<button class="add-btn ${dir}" data-action="${action}" title="${title}">`
                 + `<span class="add-btn-glyph">+</span>`
                 + `<span class="add-btn-label">${label}</span></button>`;
-            const parentAddHtml = (!isLocked && person.parentIds.length < 2)
+            const parentAddHtml = !isLocked
                 ? addTab('top', 'parent', strings.contextMenu.addParent, strings.card.addTabParent) : '';
             const partnerAddHtml = !isLocked
                 ? addTab('right', 'partner', strings.contextMenu.addPartner, strings.card.addTabPartner) : '';
@@ -1917,6 +1917,8 @@ class TreeRendererClass {
             // themselves and follow the active theme.
             maleColor: 'var(--male)',
             femaleColor: 'var(--female)',
+            otherColor: 'var(--other)',
+            unknownColor: 'var(--unknown)',
         });
 
         container.innerHTML = `${omitted}${empty}${svg}`;

@@ -45,6 +45,8 @@
             /* gender (avatar ring only) */
             --male: #5b7f9e;
             --female: #a1706e;
+            --other: #786b91;
+            --unknown: #8a8272;
             --avatar-bg: #f0e9da;
 
             /* branches (logic unchanged) */
@@ -117,6 +119,8 @@
 
             --male: #7da3c4;
             --female: #c49290;
+            --other: #a99ac5;
+            --unknown: #aaa18f;
             --avatar-bg: #3a362c;
 
             --border: #3e3a30;
@@ -891,6 +895,8 @@
         }
         .person-card.male .card-avatar { border-color: var(--male); }
         .person-card.female .card-avatar { border-color: var(--female); }
+        .person-card.other .card-avatar { border-color: var(--other); }
+        .person-card.unknown .card-avatar { border-color: var(--unknown); }
         .card-avatar img {
             width: 100%;
             height: 100%;
@@ -2671,6 +2677,8 @@
         }
         .tree-thumb-card.male { stroke: var(--male); stroke-width: 1.4; }
         .tree-thumb-card.female { stroke: var(--female); stroke-width: 1.4; }
+        .tree-thumb-card.other { stroke: var(--other); stroke-width: 1.4; }
+        .tree-thumb-card.unknown { stroke: var(--unknown); stroke-width: 1.4; }
         .tree-thumb-card.placeholder { fill: var(--surface-2); stroke-dasharray: 3 2; }
         .tree-thumb-card.focused { stroke: var(--primary); stroke-width: 2; }
 
@@ -2931,6 +2939,8 @@
             box-shadow: 0 0 0 2px var(--male);
         }
         .pm-avatar.female { box-shadow: 0 0 0 2px var(--female); }
+        .pm-avatar.other { box-shadow: 0 0 0 2px var(--other); }
+        .pm-avatar.unknown { box-shadow: 0 0 0 2px var(--unknown); }
         [data-theme="dark"] .pm-avatar { background: var(--surface-2); }
         .pm-avatar img { width: 100%; height: 100%; object-fit: cover; }
         .pm-avatar-initials {
@@ -4350,6 +4360,8 @@
         }
         .fan-sector.male path { fill: var(--male); }
         .fan-sector.female path { fill: var(--female); }
+        .fan-sector.other path { fill: var(--other); }
+        .fan-sector.unknown path { fill: var(--unknown); }
         .fan-sector:hover path { filter: brightness(0.94); }
         .fan-focus circle {
             stroke: var(--primary);
@@ -4358,6 +4370,8 @@
         }
         .fan-focus.male circle { fill: var(--male); }
         .fan-focus.female circle { fill: var(--female); }
+        .fan-focus.other circle { fill: var(--other); }
+        .fan-focus.unknown circle { fill: var(--unknown); }
         .fan-name { fill: var(--text, #222); font-weight: 600; }
         .fan-years { fill: var(--text-light, #777); font-weight: 400; }
         .fan-name.g0 { font-size: 14px; }
@@ -8398,6 +8412,8 @@
                         <option value="" data-i18n="searchFilters.anyGender"></option>
                         <option value="male" data-i18n="gender.male"></option>
                         <option value="female" data-i18n="gender.female"></option>
+                        <option value="other" data-i18n="gender.other"></option>
+                        <option value="unknown" data-i18n="gender.unknown"></option>
                     </select>
                     <select id="filter-living" onchange="window.Strom.UI.scheduleSearchFilter()">
                         <option value="" data-i18n="searchFilters.anyStatus"></option>
@@ -8771,10 +8787,14 @@
                     <div class="segment gender-segment" id="gender-segment" role="group">
                         <button type="button" class="segment-btn" data-gender="male" onclick="window.Strom.UI.setGenderFromSegment('male')" data-i18n="gender.male"></button>
                         <button type="button" class="segment-btn" data-gender="female" onclick="window.Strom.UI.setGenderFromSegment('female')" data-i18n="gender.female"></button>
+                        <button type="button" class="segment-btn" data-gender="other" onclick="window.Strom.UI.setGenderFromSegment('other')" data-i18n="gender.other"></button>
+                        <button type="button" class="segment-btn" data-gender="unknown" onclick="window.Strom.UI.setGenderFromSegment('unknown')" data-i18n="gender.unknown"></button>
                     </div>
                     <select id="input-gender" class="pm-hidden-select" tabindex="-1" aria-hidden="true">
                         <option value="male" data-i18n="gender.male"></option>
                         <option value="female" data-i18n="gender.female"></option>
+                        <option value="other" data-i18n="gender.other"></option>
+                        <option value="unknown" data-i18n="gender.unknown"></option>
                     </select>
                 </div>
             </div>
@@ -9062,6 +9082,8 @@
                     <select id="rel-gender">
                         <option value="male" data-i18n="gender.male"></option>
                         <option value="female" data-i18n="gender.female"></option>
+                        <option value="other" data-i18n="gender.other"></option>
+                        <option value="unknown" data-i18n="gender.unknown"></option>
                     </select>
                 </div>
                 <div id="duplicate-suggest-relation" class="duplicate-suggest" style="display:none;"></div>
@@ -10311,6 +10333,12 @@
                 <button class="close-btn" onclick="window.Strom.UI.closeExportAllDialog()">&times;</button>
             </div>
             <div class="menu-options">
+                <button class="menu-option" onclick="window.Strom.UI.exportCompleteArchive()">
+                    <span class="option-text">
+                        <span class="option-title" data-i18n="treeManager.exportCompleteArchive"></span>
+                        <span class="option-desc" data-i18n="treeManager.exportCompleteArchiveDesc"></span>
+                    </span>
+                </button>
                 <button class="menu-option" onclick="window.Strom.UI.exportAllAsJson()">
                     <span class="option-text">
                         <span class="option-title" data-i18n="treeManager.exportAllJson"></span>

@@ -10,6 +10,7 @@ import {
     STROM_DATA_VERSION
 } from '../types.js';
 import { migrateData } from '../data.js';
+import { assertGraphInvariants, rebuildDerivedGraphIndexes } from '../graph-invariants.js';
 import { ValidationResult } from './types.js';
 
 // ==================== JSON VALIDATION ====================
@@ -49,10 +50,8 @@ export function validateJsonImport(content: string): ValidationResult {
     const importedVersion = typeof root.version === 'number' ? root.version : 0;
     if (importedVersion === 0) {
         warnings.push('noVersion');
-    } else if (importedVersion < STROM_DATA_VERSION) {
-        warnings.push(`olderVersion:${importedVersion}:${STROM_DATA_VERSION}`);
     } else if (importedVersion > STROM_DATA_VERSION) {
-        warnings.push(`newerVersion:${importedVersion}:${STROM_DATA_VERSION}`);
+        errors.push(`newerVersion:${importedVersion}:${STROM_DATA_VERSION}`);
     }
 
     // Check for persons and partnerships objects
@@ -85,7 +84,7 @@ export function validateJsonImport(content: string): ValidationResult {
         if (typeof p.lastName !== 'string') {
             errors.push(`missingLastName:${id}`);
         }
-        if (p.gender !== 'male' && p.gender !== 'female') {
+        if (!['male', 'female', 'other', 'unknown'].includes(String(p.gender))) {
             errors.push(`invalidGender:${id}`);
         }
     }
@@ -117,8 +116,16 @@ export function validateJsonImport(content: string): ValidationResult {
     // 5. Structurally sound: carry the WHOLE tree through the whitelist-guarded
     // whole-carrier so nothing is dropped, then repair any dangling references
     // it faithfully carried (a hand-built copier used to drop these silently).
-    const data = migrateData(parsed);
-    warnings.push(...cleanDanglingReferences(data));
+    let data: StromData;
+    try {
+        data = migrateData(parsed);
+        warnings.push(...cleanDanglingReferences(data));
+        rebuildDerivedGraphIndexes(data);
+        assertGraphInvariants(data);
+    } catch {
+        errors.push('invalidGraph');
+        return { valid: false, errors, warnings };
+    }
 
     return {
         valid: errors.length === 0,

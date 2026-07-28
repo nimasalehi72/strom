@@ -538,13 +538,21 @@ export const encryptionUiMethods = uiModule({
     showExportPasswordDialog(
         callback: (password: string | null) => void,
         includeAuditLogOption = false,
-        options: { defaultPrivacy?: PrivacyMode; passwordless?: boolean; content?: boolean } = {}
+        options: {
+            defaultPrivacy?: PrivacyMode;
+            passwordless?: boolean;
+            content?: boolean;
+            privacy?: boolean;
+            requirePassword?: boolean;
+        } = {}
     ): void {
         this.exportPasswordCallback = callback;
 
         // Privacy mode selector: default per caller (share exports -> initials).
         const privacySelect = document.getElementById('export-privacy-mode') as HTMLSelectElement | null;
         if (privacySelect) privacySelect.value = options.defaultPrivacy ?? 'full';
+        const privacySection = document.getElementById('export-privacy-section');
+        if (privacySection) privacySection.style.display = options.privacy === false ? 'none' : '';
 
         // Passwordless mode (e.g. GEDCOM, which cannot be encrypted): hide the
         // password inputs and the "export encrypted" button; only privacy applies.
@@ -552,9 +560,15 @@ export const encryptionUiMethods = uiModule({
         const pwGroup = document.getElementById('export-password-group');
         const pwConfirmGroup = document.getElementById('export-password-confirm-group');
         const encryptedBtn = document.getElementById('export-with-password-btn');
+        const withoutBtn = document.querySelector('#export-password-modal .export-buttons .secondary') as HTMLElement | null;
+        const description = document.querySelector('#export-password-modal .modal-description');
         if (pwGroup) pwGroup.style.display = passwordless ? 'none' : '';
         if (pwConfirmGroup) pwConfirmGroup.style.display = passwordless ? 'none' : '';
         if (encryptedBtn) encryptedBtn.style.display = passwordless ? 'none' : '';
+        if (withoutBtn) withoutBtn.style.display = options.requirePassword ? 'none' : '';
+        if (description) description.textContent = options.requirePassword
+            ? strings.encryption.completeArchivePasswordHint
+            : strings.encryption.exportPasswordHint;
 
         // Granular "Content" section (photos / attachments / notes / sources).
         // Formats that ignore content options (GEDCOM, CSV — passwordless) hide

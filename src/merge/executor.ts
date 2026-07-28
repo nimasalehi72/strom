@@ -22,6 +22,7 @@ import {
     FieldConflict
 } from './types.js';
 import { StorageManager } from '../storage.js';
+import { getPrivateRecord, setPrivateRecord } from '../private-storage.js';
 
 // ==================== BACKUP ====================
 
@@ -30,7 +31,7 @@ import { StorageManager } from '../storage.js';
  */
 export async function createMergeBackup(data: StromData): Promise<string> {
     const key = `backup-${Date.now()}`;
-    await StorageManager.set('merge', key, data);
+    await setPrivateRecord('merge', key, data);
     return key;
 }
 
@@ -38,7 +39,7 @@ export async function createMergeBackup(data: StromData): Promise<string> {
  * Restore data from backup
  */
 export async function restoreFromBackup(key: string): Promise<StromData | null> {
-    return StorageManager.get<StromData>('merge', key);
+    return getPrivateRecord<StromData>('merge', key);
 }
 
 /**
@@ -666,13 +667,8 @@ function mergePartnershipData(existing: Partnership, incoming: Partnership): voi
 
 /**
  * After a merge, parent/child links can be left one-sided: the by-hand build
- * adds a child to a parent's childIds but the child already has two parents and
- * cannot take a third, so the reverse link is never written. That asymmetry is
- * exactly what the validator reports as missingParentRef / partnershipChildMismatch.
- *
- * The honest rule: a child that already has two parents does not gain a third —
- * so the surplus link is dropped on BOTH sides. We take parentIds (capped at 2,
- * dangling/self entries removed) as the source of truth and rebuild childIds
+ * can add the same link through several paths. We take parentIds (with
+ * dangling/self/duplicate entries removed) as the source of truth and rebuild childIds
  * from it, which makes every parent↔child link mutual by construction. Then
  * each partnership keeps only the children that list BOTH partners as parents.
  */
@@ -688,7 +684,7 @@ function enforceRelationshipSymmetry(data: StromData): void {
             seen.add(pid);
             valid.push(pid);
         }
-        person.parentIds = valid.slice(0, 2);             // a child has at most 2 parents
+        person.parentIds = valid;
         // Drop parentRelTypes entries for parents that no longer apply.
         if (person.parentRelTypes) {
             for (const key of Object.keys(person.parentRelTypes) as PersonId[]) {
@@ -743,7 +739,7 @@ function updateRelationships(
         // Update child relationships
         for (const childId of person.childIds) {
             const child = mergedData.persons[childId];
-            if (child && !child.parentIds.includes(person.id) && child.parentIds.length < 2) {
+            if (child && !child.parentIds.includes(person.id)) {
                 child.parentIds.push(person.id);
             }
         }
@@ -756,22 +752,15 @@ function updateRelationships(
             if (!child) continue;
 
             // Ensure child has both parents
-            if (!child.parentIds.includes(partnership.person1Id) && child.parentIds.length < 2) {
+            if (!child.parentIds.includes(partnership.person1Id)) {
                 child.parentIds.push(partnership.person1Id);
             }
-            if (!child.parentIds.includes(partnership.person2Id) && child.parentIds.length < 2) {
+            if (!child.parentIds.includes(partnership.person2Id)) {
                 child.parentIds.push(partnership.person2Id);
             }
         }
     }
 
-    // Limit to max 2 parents per person
-    for (const person of Object.values(mergedData.persons)) {
-        if (person.parentIds.length > 2) {
-            console.warn(`Person ${person.id} has more than 2 parents, truncating`);
-            person.parentIds = person.parentIds.slice(0, 2);
-        }
-    }
 }
 
 /**

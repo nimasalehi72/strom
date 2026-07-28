@@ -54,7 +54,7 @@ export function buildPersonsCsv(data: StromData): string {
 
         rows.push([
             p.firstName, p.lastName,
-            p.gender === 'male' ? strings.gender.male : strings.gender.female,
+            strings.gender[p.gender],
             p.birthDate ?? '', p.birthPlace ?? '',
             p.deathDate ?? '', p.deathPlace ?? '',
             personName(father), personName(mother),

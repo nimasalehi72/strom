@@ -186,7 +186,7 @@ test('merge wizard warns up-front when an input tree has validation errors', asy
 
     // A valid target tree and a source tree with a seeded error: a father that
     // does not list his child back (missingChildRef, error severity).
-    const ids = await page.evaluate(() => {
+    const ids = await page.evaluate(async () => {
         const TM = window.Strom.TreeManager;
         const targetId = TM.createTree('Target Tree');
         TM.saveTreeData(targetId, {
@@ -196,12 +196,25 @@ test('merge wizard warns up-front when an input tree has validation errors', asy
             partnerships: {},
         });
         const sourceId = TM.createTree('Source Tree');
-        TM.saveTreeData(sourceId, {
+        const invalidSource = {
             persons: {
                 s_dad: { id: 's_dad', firstName: 'Josef', lastName: 'Broken', gender: 'male', isPlaceholder: false, partnerships: [], parentIds: [], childIds: [] },
                 s_kid: { id: 's_kid', firstName: 'Karel', lastName: 'Broken', gender: 'male', isPlaceholder: false, partnerships: [], parentIds: ['s_dad'], childIds: [] },
             },
             partnerships: {},
+        };
+        // M1 correctly rejects this through saveTreeData. Seed the deliberately
+        // corrupt legacy record below the public commit boundary so the merge
+        // warning path can still be exercised.
+        await new Promise<void>((resolve, reject) => {
+            const open = indexedDB.open('strom-db');
+            open.onsuccess = () => {
+                const tx = open.result.transaction('trees', 'readwrite');
+                tx.objectStore('trees').put(invalidSource, sourceId);
+                tx.oncomplete = () => { open.result.close(); resolve(); };
+                tx.onerror = () => reject(tx.error);
+            };
+            open.onerror = () => reject(open.error);
         });
         return { targetId, sourceId };
     });

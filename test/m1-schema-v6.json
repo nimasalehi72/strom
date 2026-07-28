@@ -1,0 +1,67 @@
+{
+  "version": 6,
+  "persons": {
+    "p_child": {
+      "id": "p_child",
+      "firstName": "آرین",
+      "lastName": "کریمی",
+      "gender": "other",
+      "isPlaceholder": false,
+      "partnerships": [],
+      "parentIds": ["p_bio1", "p_bio2", "p_foster"],
+      "childIds": [],
+      "birthDate": "حدود ۱۴۰۱/۰۲",
+      "birthDateEvidence": {
+        "raw": "حدود ۱۴۰۱/۰۲",
+        "calendar": "solar-hijri",
+        "precision": "month",
+        "qualifier": "about",
+        "normalized": "1401-02"
+      },
+      "nameVariants": ["Arian Karimi", "آریان کریمی"],
+      "parentRelTypes": {
+        "p_foster": "foster"
+      },
+      "attachments": [
+        {
+          "id": "att_doc",
+          "name": "record.pdf",
+          "mimeType": "application/pdf",
+          "dataUrl": "data:application/pdf;base64,JVBERi0xLjQKJSVFT0YK",
+          "sizeBytes": 18
+        }
+      ]
+    },
+    "p_bio1": {
+      "id": "p_bio1",
+      "firstName": "Parent",
+      "lastName": "One",
+      "gender": "male",
+      "isPlaceholder": false,
+      "partnerships": [],
+      "parentIds": [],
+      "childIds": ["p_child"]
+    },
+    "p_bio2": {
+      "id": "p_bio2",
+      "firstName": "Parent",
+      "lastName": "Two",
+      "gender": "female",
+      "isPlaceholder": false,
+      "partnerships": [],
+      "parentIds": [],
+      "childIds": ["p_child"]
+    },
+    "p_foster": {
+      "id": "p_foster",
+      "firstName": "سرپرست",
+      "lastName": "ناشناخته",
+      "gender": "unknown",
+      "isPlaceholder": false,
+      "partnerships": [],
+      "parentIds": [],
+      "childIds": ["p_child"]
+    }
+  },
+  "partnerships": {}
+}

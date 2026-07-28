@@ -167,16 +167,19 @@ export const minimapMethods = uiModule({
 
         // Resolve the gender tokens once per render (canvas cannot use CSS vars).
         // A theme switch redraws the minimap (see initMinimap), so these stay
-        // in step with the active theme's --male/--female values.
+        // in step with the active theme's gender values.
         const rootStyle = getComputedStyle(document.documentElement);
         const maleColor = rootStyle.getPropertyValue('--male').trim() || '#5b7f9e';
         const femaleColor = rootStyle.getPropertyValue('--female').trim() || '#a1706e';
+        const otherColor = rootStyle.getPropertyValue('--other').trim() || '#786b91';
+        const unknownColor = rootStyle.getPropertyValue('--unknown').trim() || '#8a8272';
+        const colors = { male: maleColor, female: femaleColor, other: otherColor, unknown: unknownColor };
 
         for (const [id, pos] of positions) {
             const person = data.persons[id];
             const w = Math.max(1, cardWidth * t.scale);
             const h = Math.max(1, cardHeight * t.scale);
-            ctx.fillStyle = person?.gender === 'female' ? femaleColor : maleColor;
+            ctx.fillStyle = person ? colors[person.gender] : unknownColor;
             ctx.fillRect(pos.x * t.scale + t.offsetX, pos.y * t.scale + t.offsetY, w, h);
         }
 

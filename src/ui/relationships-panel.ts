@@ -88,7 +88,7 @@ export const relationshipsPanelMethods = uiModule({
         const isLocked = DataManager.isPersonLocked(personId);
 
         content.innerHTML = `
-            ${this.buildRelSection('parents', strings.relationships.parents, parents, personId, person.parentIds.length < 2, isLocked)}
+            ${this.buildRelSection('parents', strings.relationships.parents, parents, personId, true, isLocked)}
             ${this.buildRelSection('partners', strings.relationships.partners, partners, personId, true, isLocked)}
             ${this.buildRelSection('children', strings.relationships.children, children, personId, true, isLocked)}
             ${this.buildRelSection('siblings', strings.relationships.siblings, siblings, personId, true, isLocked)}

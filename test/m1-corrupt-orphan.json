@@ -1,0 +1,16 @@
+{
+  "version": 6,
+  "persons": {
+    "child": {
+      "id": "child",
+      "firstName": "Broken",
+      "lastName": "Link",
+      "gender": "unknown",
+      "isPlaceholder": false,
+      "partnerships": [],
+      "parentIds": ["missing"],
+      "childIds": []
+    }
+  },
+  "partnerships": {}
+}

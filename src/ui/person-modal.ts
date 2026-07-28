@@ -257,8 +257,8 @@ export const personModalMethods = uiModule({
         const avatar = document.getElementById('pm-avatar');
         if (!avatar) return;
         const gender = (document.getElementById('input-gender') as HTMLSelectElement | null)?.value || 'male';
-        avatar.classList.toggle('female', gender === 'female');
-        avatar.classList.toggle('male', gender !== 'female');
+        avatar.classList.remove('male', 'female', 'other', 'unknown');
+        avatar.classList.add(gender);
         const first = (document.getElementById('input-firstname') as HTMLInputElement | null)?.value.trim() || '';
         const last = (document.getElementById('input-lastname') as HTMLInputElement | null)?.value.trim() || '';
         const photo = (document.querySelector('#photo-preview img') as HTMLImageElement | null)?.getAttribute('src');

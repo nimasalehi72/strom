@@ -50,7 +50,7 @@ beforeEach(() => {
 });
 
 describe('executeMerge enforces parent/child symmetry (Bredlow shape)', () => {
-    it('a duplicate mother added for a child that already has two parents leaves no dangling link', async () => {
+    it('a third parent figure is retained symmetrically without dangling links', async () => {
         // Existing: child Karel with two parents (Josef + Anna), married union.
         const D = P('D', 'Josef', 'Bredlow', { birthDate: '1900', childIds: ['X'], partnerships: ['U1'] });
         const M1 = P('M1', 'Anna', 'Bredlow', { gender: 'female', birthDate: '1905', childIds: ['X'], partnerships: ['U1'] });
@@ -82,18 +82,17 @@ describe('executeMerge enforces parent/child symmetry (Bredlow shape)', () => {
                 'tooManyParents'].includes(i.type));
         expect(offending).toEqual([]);
 
-        // The child still has exactly its two original parents — not a third.
+        // M1 retains the additional parent figure instead of truncating evidence.
         const child = merged.persons['X' as PersonId];
-        expect(child.parentIds).toHaveLength(2);
+        expect(child.parentIds).toHaveLength(3);
         expect(child.parentIds).toContain('D');
         expect(child.parentIds).toContain('M1');
 
-        // The duplicate mother was added, but does NOT keep the child in childIds
-        // (the link was dropped on both sides), and no union claims the child
-        // without both parents.
+        // The additional mother and her union keep matching reverse links.
         const dupMother = Object.values(merged.persons).find(p => p.firstName === 'Marie');
         expect(dupMother).toBeDefined();
-        expect(dupMother!.childIds).not.toContain('X');
+        expect(child.parentIds).toContain(dupMother!.id);
+        expect(dupMother!.childIds).toContain('X');
         for (const u of Object.values(merged.partnerships)) {
             for (const cid of u.childIds) {
                 const c = merged.persons[cid];

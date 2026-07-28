@@ -116,6 +116,8 @@ export const familyWizardMethods = uiModule({
             <select class="wiz-gender">
                 <option value="male"${gender === 'male' ? ' selected' : ''}>${strings.gender.male}</option>
                 <option value="female"${gender === 'female' ? ' selected' : ''}>${strings.gender.female}</option>
+                <option value="other"${gender === 'other' ? ' selected' : ''}>${strings.gender.other}</option>
+                <option value="unknown"${gender === 'unknown' ? ' selected' : ''}>${strings.gender.unknown}</option>
             </select>
             <input class="wiz-birth" type="text" placeholder="${fw.year}">
             ${kind === 'partner' ? `<input class="wiz-wedding" type="text" placeholder="${fw.weddingYear}">` : ''}

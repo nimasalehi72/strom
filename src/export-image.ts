@@ -21,6 +21,8 @@ export type PosterLayout = Pick<LayoutResult, 'positions' | 'connections' | 'spo
 const COLORS = {
     male: '#5b7f9e',        // avatar ring
     female: '#a1706e',      // avatar ring
+    other: '#786b91',
+    unknown: '#8a8272',
     placeholderRing: '#b8ae99',
     cardBg: '#fffdf8',
     cardBorder: '#ddd4c2',
@@ -273,7 +275,7 @@ export function buildTreeSvg(data: StromData, result: PosterLayout, options: Pos
         const person = data.persons[personId];
         const isPlaceholder = person?.isPlaceholder;
         const ring = isPlaceholder ? COLORS.placeholderRing
-            : (person?.gender === 'male' ? COLORS.male : COLORS.female);
+            : person ? COLORS[person.gender] : COLORS.unknown;
 
         // Context-only person (step-relative / in-law): dim the whole card group
         // to 50%, matching the on-screen `indirect` de-emphasis (draw parity).

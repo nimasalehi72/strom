@@ -181,6 +181,16 @@ document.addEventListener('DOMContentLoaded', async () => {
     // Initialize IndexedDB
     await StorageManager.init();
 
+    // A replace restore uses a write-ahead journal. If the previous session
+    // stopped mid-restore, roll back before TreeManager reads the index.
+    const { recoverInterruptedArchiveRestore } = await import('./complete-archive.js');
+    try { await recoverInterruptedArchiveRestore(); } catch { /* encrypted journal waits for unlock */ }
+    window.addEventListener('strom:crypto-unlocked', () => {
+        void recoverInterruptedArchiveRestore().then(recovered => {
+            if (recovered) window.location.reload();
+        }).catch(() => {});
+    });
+
     // Initialize data (includes TreeManager initialization)
     await DataManager.init();
 

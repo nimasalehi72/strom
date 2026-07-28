@@ -1,0 +1,17 @@
+{
+  "version": 1,
+  "persons": {
+    "legacy": {
+      "id": "legacy",
+      "firstName": "قدیمی",
+      "lastName": "Record",
+      "gender": "male",
+      "isPlaceholder": false,
+      "partnerships": [],
+      "parentIds": [],
+      "childIds": [],
+      "birthDate": "<1900"
+    }
+  },
+  "partnerships": {}
+}

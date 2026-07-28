@@ -69,7 +69,6 @@ export function validateTreeData(data: StromData): ValidationResult {
     checkBidirectionalReferences(data, addIssue);
     checkPartnershipConsistency(data, addIssue);
     checkOrphanedReferences(data, addIssue);
-    checkParentCount(data, addIssue);
     checkAgePlausibility(data, addIssue);
     checkGenerationConsistency(data, addIssue);
     checkCrossbranchAnomalies(data, addIssue);
@@ -422,28 +421,6 @@ function checkOrphanedReferences(
                     [partnershipId]
                 );
             }
-        }
-    }
-}
-
-// ==================== CHECK: PARENT COUNT ====================
-
-/**
- * Check that no person has more than 2 parents
- */
-function checkParentCount(
-    data: StromData,
-    addIssue: (s: IssueSeverity, t: string, m: string, p?: PersonId[], pp?: PartnershipId[]) => void
-): void {
-    for (const [personId, person] of Object.entries(data.persons) as [PersonId, Person][]) {
-        if (person.parentIds.length > 2) {
-            const parentNames = person.parentIds.map(id => getPersonName(data.persons[id])).join(', ');
-            addIssue(
-                'error',
-                'tooManyParents',
-                `${getPersonName(person)} has ${person.parentIds.length} parents: ${parentNames}`,
-                [personId, ...person.parentIds]
-            );
         }
     }
 }

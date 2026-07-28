@@ -140,6 +140,8 @@ const stringsEN = {
             manual: 'Manual',
             'pre-import': 'Before import',
             'pre-merge': 'Before merge',
+            'pre-upgrade': 'Before data upgrade',
+            'pre-delete': 'Before deletion',
         },
     },
 
@@ -861,7 +863,9 @@ const stringsEN = {
     // Gender
     gender: {
         male: 'Male',
-        female: 'Female'
+        female: 'Female',
+        other: 'Other',
+        unknown: 'Unknown'
     },
 
     // Partnership status
@@ -1434,6 +1438,10 @@ const stringsEN = {
         exportAll: 'Export All Trees',
         exportAllJson: 'Export as JSON',
         exportAllJsonDesc: 'All trees in one JSON file',
+        exportCompleteArchive: 'Verified complete archive',
+        exportCompleteArchiveDesc: 'Trees, settings, backups, audit history and recovery manifest',
+        restoreCompleteArchiveConfirm: (trees: number, attachments: number) => `Restore ${trees} archived tree(s) and ${attachments} attachment(s) as new copies? Existing trees will not be changed.`,
+        restoreCompleteArchiveDone: 'Verified archive restored as new trees',
         exportAllApp: 'Export as App',
         exportAllAppDesc: 'Standalone HTML with all trees',
         // Tree visibility
@@ -1537,6 +1545,7 @@ const stringsEN = {
         wrongPassword: 'Incorrect password',
         exportPassword: 'Export encryption',
         exportPasswordHint: 'Set a password to encrypt the file, or export without encryption.',
+        completeArchivePasswordHint: 'Set a password for this recovery archive. Complete archives cannot be exported unencrypted.',
         exportWithPassword: 'Export encrypted',
         exportWithoutPassword: 'Export without encryption',
         passwordMismatch: 'Passwords do not match',
@@ -1927,6 +1936,8 @@ const stringsCZ: StringsType = {
             manual: 'Ruční',
             'pre-import': 'Před importem',
             'pre-merge': 'Před sloučením',
+            'pre-upgrade': 'Před aktualizací dat',
+            'pre-delete': 'Před smazáním',
         },
     },
 
@@ -2655,7 +2666,9 @@ const stringsCZ: StringsType = {
     // Gender
     gender: {
         male: 'Muž',
-        female: 'Žena'
+        female: 'Žena',
+        other: 'Jiné',
+        unknown: 'Neznámé'
     },
 
     // Partnership status
@@ -3228,6 +3241,10 @@ const stringsCZ: StringsType = {
         exportAll: 'Exportovat všechny stromy',
         exportAllJson: 'Exportovat jako JSON',
         exportAllJsonDesc: 'Všechny stromy v jednom JSON souboru',
+        exportCompleteArchive: 'Ověřený úplný archiv',
+        exportCompleteArchiveDesc: 'Stromy, nastavení, zálohy, historie změn a manifest obnovy',
+        restoreCompleteArchiveConfirm: (trees: number, attachments: number) => `Obnovit ${trees} archivovaných stromů a ${attachments} příloh jako nové kopie? Stávající stromy se nezmění.`,
+        restoreCompleteArchiveDone: 'Ověřený archiv byl obnoven jako nové stromy',
         exportAllApp: 'Exportovat jako aplikaci',
         exportAllAppDesc: 'Samostatný HTML se všemi stromy',
         // Tree visibility
@@ -3331,6 +3348,7 @@ const stringsCZ: StringsType = {
         wrongPassword: 'Nesprávné heslo',
         exportPassword: 'Šifrování exportu',
         exportPasswordHint: 'Zadej heslo pro šifrování souboru, nebo exportuj bez šifrování.',
+        completeArchivePasswordHint: 'Nastav heslo pro tento archiv obnovy. Úplný archiv nelze exportovat bez šifrování.',
         exportWithPassword: 'Exportovat šifrovaně',
         exportWithoutPassword: 'Exportovat bez šifrování',
         passwordMismatch: 'Hesla se neshodují',
@@ -3716,6 +3734,8 @@ const stringsDE: StringsType = {
             manual: 'Manuell',
             'pre-import': 'Vor dem Import',
             'pre-merge': 'Vor dem Zusammenführen',
+            'pre-upgrade': 'Vor der Datenaktualisierung',
+            'pre-delete': 'Vor dem Löschen',
         },
     },
 
@@ -4416,7 +4436,9 @@ const stringsDE: StringsType = {
     // Gender
     gender: {
         male: 'Männlich',
-        female: 'Weiblich'
+        female: 'Weiblich',
+        other: 'Andere',
+        unknown: 'Unbekannt'
     },
 
     // Partnership status
@@ -4964,6 +4986,10 @@ const stringsDE: StringsType = {
         exportAll: 'Alle Stammbäume exportieren',
         exportAllJson: 'Als JSON exportieren',
         exportAllJsonDesc: 'Alle Stammbäume in einer JSON-Datei',
+        exportCompleteArchive: 'Verifiziertes vollständiges Archiv',
+        exportCompleteArchiveDesc: 'Stammbäume, Einstellungen, Sicherungen, Änderungsverlauf und Wiederherstellungsmanifest',
+        restoreCompleteArchiveConfirm: (trees: number, attachments: number) => `${trees} archivierte Stammbäume und ${attachments} Anhänge als neue Kopien wiederherstellen? Bestehende Stammbäume bleiben unverändert.`,
+        restoreCompleteArchiveDone: 'Verifiziertes Archiv als neue Stammbäume wiederhergestellt',
         exportAllApp: 'Als App exportieren',
         exportAllAppDesc: 'Eigenständige HTML-Datei mit allen Stammbäumen',
         showTree: 'Stammbaum einblenden',
@@ -5063,6 +5089,7 @@ const stringsDE: StringsType = {
         wrongPassword: 'Falsches Passwort',
         exportPassword: 'Export-Verschlüsselung',
         exportPasswordHint: 'Legen Sie ein Passwort fest, um die Datei zu verschlüsseln, oder exportieren Sie ohne Verschlüsselung.',
+        completeArchivePasswordHint: 'Legen Sie ein Passwort für dieses Wiederherstellungsarchiv fest. Vollständige Archive können nicht unverschlüsselt exportiert werden.',
         exportWithPassword: 'Verschlüsselt exportieren',
         exportWithoutPassword: 'Ohne Verschlüsselung exportieren',
         passwordMismatch: 'Passwörter stimmen nicht überein',

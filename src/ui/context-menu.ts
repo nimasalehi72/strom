@@ -57,10 +57,8 @@ export const contextMenuMethods = uiModule({
             { action: 'relationship', icon: '\u{1F91D}', label: strings.contextMenu.relationship },
             { action: 'archives', icon: '\u{1F4DA}', label: strings.contextMenu.archives },
         ];
-        if (person.parentIds.length < 2) {
-            items.push({ action: 'parent', icon: '↑', label: strings.contextMenu.addParent, divider: true });
-        }
-        items.push({ action: 'partner', icon: '↔', label: strings.contextMenu.addPartner, divider: person.parentIds.length >= 2 });
+        items.push({ action: 'parent', icon: '↑', label: strings.contextMenu.addParent, divider: true });
+        items.push({ action: 'partner', icon: '↔', label: strings.contextMenu.addPartner });
         items.push({ action: 'child', icon: '↓', label: strings.contextMenu.addChild });
         items.push({ action: 'sibling', icon: '↔', label: strings.contextMenu.addSibling });
         items.push({ action: 'add-family', icon: '\u{1F46A}', label: strings.familyWizard.menu });

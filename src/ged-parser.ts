@@ -34,7 +34,8 @@ import {
     generateLifeEventId,
     generateParticipantId,
     generateSourceId,
-    PlaceGeo
+    PlaceGeo,
+    Gender
 } from './types';
 import { dateSortKey } from './dates';
 import { placeKey } from './places';
@@ -1062,15 +1063,8 @@ export function parseGedcom(content: string): ParsedGedcom {
 export function convertToStrom(gedcom: ParsedGedcom): GedcomConversionResult {
     const { individuals, families, sources: gedSources, droppedTags } = gedcom;
 
-    // Family roles disambiguate individuals with SEX U/missing: a HUSB is
-    // male, a WIFE female. Without any role we fall back to female (legacy
-    // behaviour) but COUNT it so the import summary can say so.
-    const husbIds = new Set<string>();
-    const wifeIds = new Set<string>();
-    for (const fam of families.values()) {
-        if (fam.husb) husbIds.add(fam.husb);
-        if (fam.wife) wifeIds.add(fam.wife);
-    }
+    // Preserve explicit M/F/X values. U, missing, and unrecognised values stay
+    // unknown; a person's role in a family is not evidence of gender.
     let unknownSexPersons = 0;
     let otherFamilyLinks = 0;
 
@@ -1117,12 +1111,13 @@ export function convertToStrom(gedcom: ParsedGedcom): GedcomConversionResult {
     const externalMedia: ExternalMediaRef[] = [];
     for (const [gedId, indi] of validIndividuals) {
         const personId = personIdMap.get(gedId)!;
-        let gender: 'male' | 'female';
+        let gender: Gender;
         if (indi.sex === 'M') gender = 'male';
         else if (indi.sex === 'F') gender = 'female';
+        else if (indi.sex === 'X') gender = 'other';
         else {
             unknownSexPersons++;
-            gender = husbIds.has(gedId) ? 'male' : 'female';
+            gender = 'unknown';
         }
         const person: Person = {
             id: personId,
@@ -1260,7 +1255,7 @@ export function convertToStrom(gedcom: ParsedGedcom): GedcomConversionResult {
      * The ONE family each child hangs from.
      *
      * GEDCOM lets a child belong to several families — born to one, adopted into
-     * another — but a person here has at most two parents (DataManager enforces
+     * another — and a person may have multiple typed parent figures
      * it; only this importer ever broke the rule). Left unchecked the child
      * collected a parent from every family and was drawn hanging off all of them
      * at once, which is the long connector in the 555SAMPLE render.

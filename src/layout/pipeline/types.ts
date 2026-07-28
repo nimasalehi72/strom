@@ -3,7 +3,7 @@
  * Complete type definitions for the 8-step layout pipeline.
  */
 
-import { PersonId, PartnershipId, StromData, LayoutConfig, Position } from '../../types.js';
+import { PersonId, PartnershipId, StromData, LayoutConfig, Position, Gender } from '../../types.js';
 
 // ==================== DISPLAY POLICY ====================
 
@@ -99,7 +99,7 @@ export interface PersonNode {
     id: PersonId;
     firstName: string;
     lastName: string;
-    gender: 'male' | 'female';
+    gender: Gender;
     birthDate?: string;
 }
 

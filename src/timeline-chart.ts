@@ -23,13 +23,15 @@ import {
 const TOP = 40;
 const PAD_R = 16;
 /**
- * Fallback life-bar colours — the light-theme `--male` / `--female` token
- * values. Callers pass resolved colours (screen: the `var(--male/--female)`
- * tokens directly; poster: hex read via getComputedStyle at export time);
+ * Fallback life-bar colours for the four recorded gender values. Callers pass
+ * resolved colours (screen: CSS variables directly; poster: hex read via
+ * getComputedStyle at export time);
  * these apply only when a caller supplies none.
  */
 const FALLBACK_MALE = '#5b7f9e';
 const FALLBACK_FEMALE = '#a1706e';
+const FALLBACK_OTHER = '#786b91';
+const FALLBACK_UNKNOWN = '#8a8272';
 
 /**
  * Light-theme timeline colours as concrete values, mirroring the `.tl-*` rules
@@ -66,6 +68,8 @@ export interface TimelineSvgOptions {
     maleColor?: string;
     /** Female life-bar fill. Screen: 'var(--female)'. Poster: resolved hex. */
     femaleColor?: string;
+    otherColor?: string;
+    unknownColor?: string;
 }
 
 /** Localized label for an event dot's tooltip (mirror of the renderer). */
@@ -94,9 +98,13 @@ function rowSvg(
     const barY = y + (rowH - 14) / 2;
     const x1 = xOf(r.startYear), x2 = xOf(r.endYear);
     const w = Math.max(2, x2 - x1);
-    const color = r.gender === 'female'
-        ? (opts.femaleColor ?? FALLBACK_FEMALE)
-        : (opts.maleColor ?? FALLBACK_MALE);
+    const colors = {
+        male: opts.maleColor ?? FALLBACK_MALE,
+        female: opts.femaleColor ?? FALLBACK_FEMALE,
+        other: opts.otherColor ?? FALLBACK_OTHER,
+        unknown: opts.unknownColor ?? FALLBACK_UNKNOWN,
+    };
+    const color = colors[r.gender];
     const focused = r.personId === opts.focusId ? ' focused' : '';
     const highlight = opts.highlightIds
         ? (opts.highlightIds.has(r.personId) ? ' search-hit' : ' search-dim') : '';
@@ -171,12 +179,16 @@ export function buildTimelineSvg(model: TimelineModel, opts: TimelineSvgOptions)
     // Fade-out gradients for bars with an unknown end (deceased, no death date).
     const maleColor = opts.maleColor ?? FALLBACK_MALE;
     const femaleColor = opts.femaleColor ?? FALLBACK_FEMALE;
+    const otherColor = opts.otherColor ?? FALLBACK_OTHER;
+    const unknownColor = opts.unknownColor ?? FALLBACK_UNKNOWN;
     const fadeStops = (color: string) =>
         `<stop offset="0" stop-color="${color}" stop-opacity="0.85"/>`
         + `<stop offset="1" stop-color="${color}" stop-opacity="0"/>`;
     const defs = `<defs>`
         + `<linearGradient id="tl-fade-male" x1="0" y1="0" x2="1" y2="0">${fadeStops(maleColor)}</linearGradient>`
         + `<linearGradient id="tl-fade-female" x1="0" y1="0" x2="1" y2="0">${fadeStops(femaleColor)}</linearGradient>`
+        + `<linearGradient id="tl-fade-other" x1="0" y1="0" x2="1" y2="0">${fadeStops(otherColor)}</linearGradient>`
+        + `<linearGradient id="tl-fade-unknown" x1="0" y1="0" x2="1" y2="0">${fadeStops(unknownColor)}</linearGradient>`
         + `</defs>`;
 
     const style = mode === 'poster' ? `<style>${TIMELINE_LIGHT_STYLE}</style>` : '';
@@ -240,7 +252,7 @@ export function timelinePosterGeometry(model: TimelineModel, hasFooter: boolean)
  */
 export function buildTimelinePosterSvg(
     model: TimelineModel,
-    opts: Pick<TimelineSvgOptions, 'esc' | 'focusId' | 'maleColor' | 'femaleColor'>,
+    opts: Pick<TimelineSvgOptions, 'esc' | 'focusId' | 'maleColor' | 'femaleColor' | 'otherColor' | 'unknownColor'>,
     meta: PosterFooterMeta
 ): string {
     const hasFooter = !!(meta.treeName || meta.viewLabel || meta.dateLabel);
@@ -259,6 +271,8 @@ export function buildTimelinePosterSvg(
         mode: 'poster',
         maleColor: opts.maleColor,
         femaleColor: opts.femaleColor,
+        otherColor: opts.otherColor,
+        unknownColor: opts.unknownColor,
     });
     // Embed the timeline as a nested SVG offset by the padding. buildTimelineSvg
     // already emits width="innerW" height="innerH" (== g.innerW/g.innerH), so we

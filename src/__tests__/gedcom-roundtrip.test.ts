@@ -303,7 +303,7 @@ describe('GEDCOM fidelity fixes (audit 2026-07)', () => {
         expect(r.stats.droppedTagSummary).toContain('NICK ×1');
     });
 
-    it('infers gender from the family role for SEX U, and counts it', () => {
+    it('preserves unknown gender for SEX U or missing SEX, and counts it', () => {
         const ged = GED([
             '0 @I1@ INDI', '1 NAME Alex /Smith/', '1 SEX U', '1 FAMS @F1@',
             '0 @I2@ INDI', '1 NAME Kim /Smith/', '1 FAMS @F1@',
@@ -311,8 +311,8 @@ describe('GEDCOM fidelity fixes (audit 2026-07)', () => {
         ].join('\n'));
         const r = conv(ged);
         const persons = Object.values(r.data.persons);
-        expect(persons.find(p => p.firstName === 'Alex')?.gender).toBe('male');   // HUSB
-        expect(persons.find(p => p.firstName === 'Kim')?.gender).toBe('female');  // WIFE
+        expect(persons.find(p => p.firstName === 'Alex')?.gender).toBe('unknown');
+        expect(persons.find(p => p.firstName === 'Kim')?.gender).toBe('unknown');
         expect(r.stats.unknownSexPersons).toBe(2);
     });
 

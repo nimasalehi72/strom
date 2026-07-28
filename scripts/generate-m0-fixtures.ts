@@ -9,7 +9,6 @@
 import { writeFileSync } from 'node:fs';
 import { join } from 'node:path';
 import {
-    STROM_DATA_VERSION,
     toPartnershipId,
     toPersonId,
     type Gender,
@@ -105,7 +104,8 @@ class FixtureBuilder {
 
     data(extra: Partial<StromData> = {}): StromData {
         return {
-            version: STROM_DATA_VERSION,
+            // Frozen M0 schema: these are immutable compatibility fixtures.
+            version: 5,
             persons: this.persons,
             partnerships: this.partnerships,
             ...extra,
@@ -278,18 +278,8 @@ function writeFixture(name: string, data: StromData): void {
     console.log(`${name}: ${Object.keys(data.persons).length} people, ${Object.keys(data.partnerships).length} partnerships, ${validation.stats.warnings} warnings`);
 }
 
-function writeExpectedInvalidFixture(name: string, data: StromData, expectedType: string): void {
-    const validation = validateTreeData(data);
-    if (!validation.issues.some(issue => issue.severity === 'error' && issue.type === expectedType)) {
-        throw new Error(`${name} did not produce expected ${expectedType} validation error.`);
-    }
-    const path = join(process.cwd(), 'test', name);
-    writeFileSync(path, `${JSON.stringify(data, null, 2)}\n`, 'utf8');
-    console.log(`${name}: expected current limitation ${expectedType}`);
-}
-
 writeFixture('m0-complex-family.json', complexFamily());
 for (const size of [100, 500, 1000]) {
     writeFixture(`m0-scale-${size}.json`, scaleFamily(size));
 }
-writeExpectedInvalidFixture('m0-current-limit-multi-parent.json', multiParentLimit(), 'tooManyParents');
+writeFixture('m0-current-limit-multi-parent.json', multiParentLimit());

@@ -80,6 +80,21 @@ describe('buildTimelineSvg (screen mode)', () => {
         expect(svg).not.toContain('#8fb8de');
         expect(svg).not.toContain('#e8a0bf');
     });
+
+    it('renders other and unknown with neutral tokens instead of binary colours', () => {
+        const d = data([
+            person('o', 'Other', 'other', { birthDate: '1990' }),
+            person('u', 'Unknown', 'unknown', { birthDate: '1991' }),
+        ]);
+        const svg = buildTimelineSvg(computeTimelineModel(d, ids(d), TODAY), {
+            esc, width: 800, rowH: 30, labelW: 160, mode: 'screen',
+            otherColor: 'var(--other)', unknownColor: 'var(--unknown)',
+        });
+        expect(svg).toContain('fill="var(--other)"');
+        expect(svg).toContain('fill="var(--unknown)"');
+        expect(svg).toContain('id="tl-fade-other"');
+        expect(svg).toContain('id="tl-fade-unknown"');
+    });
 });
 
 describe('buildTimelinePosterSvg', () => {

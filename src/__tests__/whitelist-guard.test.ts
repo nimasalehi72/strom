@@ -85,11 +85,8 @@ function fullTree(): Required<StromData> {
 describe('migrateData keeps every StromData field', () => {
     const full = fullTree();
 
-    /**
-     * `version` is deliberately not carried: the app re-stamps it on save, so a
-     * load is where an old version number is meant to disappear.
-     */
-    const CARRIED = (Object.keys(full) as (keyof StromData)[]).filter(k => k !== 'version');
+    /** Loads are re-stamped to the current schema and carry every data field. */
+    const CARRIED = Object.keys(full) as (keyof StromData)[];
 
     it('carries every field through a load', () => {
         const loaded = migrateData(structuredClone(full));
@@ -107,13 +104,14 @@ describe('migrateData keeps every StromData field', () => {
 
     it('survives data that is missing everything optional', () => {
         const bare = { persons: {}, partnerships: {} };
-        expect(migrateData(bare)).toEqual({ persons: {}, partnerships: {} });
+        expect(migrateData(bare)).toEqual({ version: STROM_DATA_VERSION, persons: {}, partnerships: {} });
     });
 
     it('turns junk into an empty tree rather than throwing', () => {
-        expect(migrateData(null)).toEqual({ persons: {}, partnerships: {} });
-        expect(migrateData('nonsense')).toEqual({ persons: {}, partnerships: {} });
-        expect(migrateData(undefined)).toEqual({ persons: {}, partnerships: {} });
+        const empty = { version: STROM_DATA_VERSION, persons: {}, partnerships: {} };
+        expect(migrateData(null)).toEqual(empty);
+        expect(migrateData('nonsense')).toEqual(empty);
+        expect(migrateData(undefined)).toEqual(empty);
     });
 
     it('fills in a partnership status that predates the field', () => {
@@ -141,9 +139,8 @@ describe('migrateData keeps every StromData field', () => {
 describe('validateJsonImport keeps every StromData field', () => {
     const full = fullTree();
 
-    // version is re-stamped on save, so an import is where an old version number
-    // is meant to disappear; every other field is a faithful copy of the file.
-    const CARRIED = (Object.keys(full) as (keyof StromData)[]).filter(k => k !== 'version');
+    // Import re-stamps version to the current schema and carries every field.
+    const CARRIED = Object.keys(full) as (keyof StromData)[];
 
     it('carries every field through an import', () => {
         const result = validateJsonImport(JSON.stringify(full));
@@ -286,6 +283,8 @@ type OwnedElsewhere =
     | 'parentIds'           // addParentChild / removeParentChild
     | 'childIds'            // addParentChild / removeParentChild
     | 'parentRelTypes'      // setParentRelType
+    | 'birthDateEvidence'   // structured import/data-contract editor
+    | 'deathDateEvidence'   // structured import/data-contract editor
     | 'events'              // addLifeEvent / updateLifeEvent / removeLifeEvent
     | 'sourceIds'           // citePerson / uncitePerson
     | 'attachments'         // addAttachment / removeAttachment

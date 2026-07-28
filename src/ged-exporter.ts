@@ -309,7 +309,10 @@ export function exportToGedcom(data: StromData, treeName?: string): GedcomExport
         }
 
         // Sex
-        lines.push(`1 SEX ${person.gender === 'male' ? 'M' : 'F'}`);
+        const gedcomSex = person.gender === 'male' ? 'M'
+            : person.gender === 'female' ? 'F'
+                : person.gender === 'other' ? 'X' : 'U';
+        lines.push(`1 SEX ${gedcomSex}`);
 
         // Birth
         if (person.birthDate || person.birthPlace) {

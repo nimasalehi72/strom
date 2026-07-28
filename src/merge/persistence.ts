@@ -12,6 +12,7 @@ import {
     MatchDecision
 } from './types.js';
 import { StorageManager } from '../storage.js';
+import { getPrivateRecord, setPrivateRecord } from '../private-storage.js';
 
 // ==================== IDB KEYS ====================
 
@@ -118,7 +119,7 @@ export async function saveCurrentMerge(state: MergeState, fileName?: string): Pr
             state: serializeState(state)
         };
 
-        await StorageManager.set('merge', CURRENT_KEY, session);
+        await setPrivateRecord('merge', CURRENT_KEY, session);
     } catch (error) {
         console.error('Failed to save current merge:', error);
     }
@@ -126,7 +127,7 @@ export async function saveCurrentMerge(state: MergeState, fileName?: string): Pr
 
 export async function getCurrentMerge(): Promise<MergeState | null> {
     try {
-        const session = await StorageManager.get<SavedMergeSession>('merge', CURRENT_KEY);
+        const session = await getPrivateRecord<SavedMergeSession>('merge', CURRENT_KEY);
         if (!session) return null;
         return deserializeState(session.state);
     } catch (error) {
@@ -137,7 +138,7 @@ export async function getCurrentMerge(): Promise<MergeState | null> {
 
 export async function getCurrentMergeInfo(): Promise<Omit<SavedMergeSession, 'state'> | null> {
     try {
-        const session = await StorageManager.get<SavedMergeSession>('merge', CURRENT_KEY);
+        const session = await getPrivateRecord<SavedMergeSession>('merge', CURRENT_KEY);
         if (!session) return null;
         return {
             id: session.id,
@@ -178,7 +179,7 @@ export async function saveMergeSession(
         const sessions = await listMergeSessions();
         sessions.push(session);
 
-        await StorageManager.set('merge', SESSIONS_KEY, sessions);
+        await setPrivateRecord('merge', SESSIONS_KEY, sessions);
 
         // Clear current merge after saving
         await clearCurrentMerge();
@@ -208,7 +209,7 @@ export async function deleteMergeSession(id: string): Promise<void> {
     try {
         const sessions = await listMergeSessions();
         const filtered = sessions.filter(s => s.id !== id);
-        await StorageManager.set('merge', SESSIONS_KEY, filtered);
+        await setPrivateRecord('merge', SESSIONS_KEY, filtered);
     } catch (error) {
         console.error('Failed to delete merge session:', error);
     }
@@ -220,7 +221,7 @@ export async function renameMergeSession(id: string, newName: string): Promise<v
         const session = sessions.find(s => s.id === id);
         if (session) {
             session.incomingFileName = newName;
-            await StorageManager.set('merge', SESSIONS_KEY, sessions);
+            await setPrivateRecord('merge', SESSIONS_KEY, sessions);
         }
     } catch (error) {
         console.error('Failed to rename merge session:', error);
@@ -229,7 +230,7 @@ export async function renameMergeSession(id: string, newName: string): Promise<v
 
 export async function listMergeSessions(): Promise<SavedMergeSession[]> {
     try {
-        const sessions = await StorageManager.get<SavedMergeSession[]>('merge', SESSIONS_KEY);
+        const sessions = await getPrivateRecord<SavedMergeSession[]>('merge', SESSIONS_KEY);
         return sessions || [];
     } catch (error) {
         console.error('Failed to list merge sessions:', error);

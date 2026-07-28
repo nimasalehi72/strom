@@ -22,6 +22,7 @@ import { isEncrypted, EncryptedData, CryptoSession } from './crypto.js';
 import { SettingsManager } from './settings.js';
 import { AuditLogManager } from './audit-log.js';
 import { StorageManager } from './storage.js';
+import { assertGraphInvariants } from './graph-invariants.js';
 
 /** Current tree index version */
 const TREE_INDEX_VERSION = 1;
@@ -51,6 +52,8 @@ class TreeManagerClass {
     };
 
     private initialized = false;
+    /** Revision observed when each tree was last loaded/saved in this tab. */
+    private loadedRevisions = new Map<TreeId, number>();
 
     // ==================== INITIALIZATION ====================
 
@@ -94,6 +97,7 @@ class TreeManagerClass {
 
             // Save empty tree data (fire-and-forget)
             void StorageManager.set('trees', treeId, emptyData);
+            this.loadedRevisions.set(treeId, 0);
 
             // Add to index and set as active
             this.index.trees.push(metadata);
@@ -240,6 +244,7 @@ class TreeManagerClass {
 
         // Save tree data (fire-and-forget)
         void StorageManager.set('trees', treeId, emptyData);
+        this.loadedRevisions.set(treeId, 0);
 
         // Add to index
         this.index.trees.push(metadata);
@@ -256,10 +261,38 @@ class TreeManagerClass {
         if (idx === -1) return false;
 
         // Flush pending writes before delete (ensure index is up to date)
+        await this.flushSaves();
         await StorageManager.flush();
+
+        // Verified recovery record outside the stores being deleted. It keeps
+        // the canonical tree, audit trail, snapshots and share baselines even
+        // after the normal cascade cleanup finishes.
+        const treeRecord = await StorageManager.getTreeRecord(id);
+        const audit = await StorageManager.get('audit', id);
+        const snapshots = (await StorageManager.entries<{ meta?: { treeId?: string } }>('snapshots'))
+            .filter(([, value]) => value?.meta?.treeId === id);
+        const shareBaselines = (await StorageManager.entries<{ treeId?: string }>('shareBaselines'))
+            .filter(([, value]) => value?.treeId === id);
+        const recoveryPayload = {
+            kind: 'deleted-tree',
+            treeId: id,
+            createdAt: new Date().toISOString(),
+            metadata: structuredClone(this.index.trees[idx]),
+            treeRecord,
+            audit,
+            snapshots,
+            shareBaselines,
+            excluded: ['fileHandles'],
+        };
+        const { canonicalStringify, sha256Text } = await import('./complete-archive.js');
+        await StorageManager.set('recovery', `deleted-tree:${id}:${Date.now()}`, {
+            ...recoveryPayload,
+            sha256: await sha256Text(canonicalStringify(recoveryPayload)),
+        });
 
         // Remove tree data from IDB
         await StorageManager.delete('trees', id);
+        this.loadedRevisions.delete(id);
 
         // Remove audit log for this tree
         await AuditLogManager.deleteForTree(id);
@@ -325,6 +358,7 @@ class TreeManagerClass {
 
         // Save tree data (fire-and-forget)
         void StorageManager.set('trees', newId, sourceData);
+        this.loadedRevisions.set(newId, 0);
 
         // Add to index
         this.index.trees.push(metadata);
@@ -341,8 +375,10 @@ class TreeManagerClass {
     async getTreeData(id: TreeId): Promise<StromData | null> {
         // Ensure any pending writes are flushed before reading
         await StorageManager.flush();
-        const raw = await StorageManager.get<StromData | EncryptedData>('trees', id);
-        if (!raw) return null;
+        const record = await StorageManager.getTreeRecord<StromData | EncryptedData>(id);
+        if (!record) return null;
+        this.loadedRevisions.set(id, record.revision);
+        const raw = record.payload;
 
         try {
             // If data is encrypted, decrypt it
@@ -365,18 +401,18 @@ class TreeManagerClass {
      * Check if tree data is encrypted
      */
     async isTreeDataEncrypted(id: TreeId): Promise<boolean> {
-        const raw = await StorageManager.get<unknown>('trees', id);
-        if (!raw) return false;
-        return isEncrypted(raw);
+        const record = await StorageManager.getTreeRecord<unknown>(id);
+        return record ? isEncrypted(record.payload) : false;
     }
 
     /**
      * Get raw encrypted data for password validation
      */
     async getEncryptedData(id: TreeId): Promise<EncryptedData | null> {
-        const raw = await StorageManager.get<unknown>('trees', id);
-        if (!raw) return null;
-        if (isEncrypted(raw)) return raw as EncryptedData;
+        const record = await StorageManager.getTreeRecord<unknown>(id);
+        if (!record) return null;
+        this.loadedRevisions.set(id, record.revision);
+        if (isEncrypted(record.payload)) return record.payload as EncryptedData;
         return null;
     }
 
@@ -412,6 +448,7 @@ class TreeManagerClass {
      * of a swallowed rejection.
      */
     saveTreeData(id: TreeId, data: StromData): void {
+        assertGraphInvariants(data);
         // Ensure version is set
         data.version = STROM_DATA_VERSION;
         // Snapshot NOW: the caller keeps mutating the live object.
@@ -419,15 +456,21 @@ class TreeManagerClass {
 
         const prev = this.saveQueues.get(id) ?? Promise.resolve();
         const next = prev.then(async () => {
+            const observed = this.loadedRevisions.get(id)
+                ?? (await StorageManager.getTreeRecord(id))?.revision ?? 0;
             if (SettingsManager.isEncryptionEnabled()) {
                 if (!CryptoSession.isUnlocked()) throw new Error('locked');
                 const encrypted = await CryptoSession.encrypt(plainText);
                 const sizeBytes = new Blob([JSON.stringify(encrypted)]).size;
-                await StorageManager.set('trees', id, encrypted);
+                const revision = await StorageManager.compareAndSwapTree(id, observed, encrypted);
+                this.loadedRevisions.set(id, revision);
                 this.updateMetadata(id, data, sizeBytes);
             } else {
                 const sizeBytes = new Blob([plainText]).size;
-                await StorageManager.set('trees', id, JSON.parse(plainText) as StromData);
+                const revision = await StorageManager.compareAndSwapTree(
+                    id, observed, JSON.parse(plainText) as StromData,
+                );
+                this.loadedRevisions.set(id, revision);
                 this.updateMetadata(id, data, sizeBytes);
             }
         }).catch((err) => {
@@ -441,6 +484,12 @@ class TreeManagerClass {
             }
         });
         this.saveQueues.set(id, next);
+    }
+
+    /** Wait until every queued tree save in this tab has settled. */
+    async flushSaves(): Promise<void> {
+        await Promise.all([...this.saveQueues.values()]);
+        await StorageManager.flush();
     }
 
     /** Update in-memory metadata after save */
@@ -493,6 +542,7 @@ class TreeManagerClass {
 
         // Save tree data (fire-and-forget)
         void StorageManager.set('trees', treeId, data);
+        this.loadedRevisions.set(treeId, 0);
 
         // Add to index
         this.index.trees.push(metadata);
@@ -577,6 +627,10 @@ class TreeManagerClass {
             return setting as TreeId;
         }
 
+        // No explicit startup preference: preserve the persisted active tree.
+        // Restore-as-new intentionally changes this pointer, and resetting to
+        // trees[0] here would silently reopen the pre-restore tree.
+        if (this.isUsable(this.index.activeTreeId)) return this.index.activeTreeId;
         return this.firstUsableTreeId();
     }
 

@@ -1,0 +1,25 @@
+{
+  "version": 6,
+  "persons": {
+    "person": {
+      "id": "person",
+      "firstName": "Missing",
+      "lastName": "Attachment",
+      "gender": "unknown",
+      "isPlaceholder": false,
+      "partnerships": [],
+      "parentIds": [],
+      "childIds": [],
+      "attachments": [
+        {
+          "id": "att_missing",
+          "name": "lost.pdf",
+          "mimeType": "application/pdf",
+          "dataUrl": "",
+          "sizeBytes": 123
+        }
+      ]
+    }
+  },
+  "partnerships": {}
+}

@@ -10,7 +10,7 @@ import { StorageManager } from './storage.js';
 import { SettingsManager } from './settings.js';
 import { CryptoSession, EncryptedData } from './crypto.js';
 
-export type SnapshotReason = 'auto' | 'manual' | 'pre-import' | 'pre-merge';
+export type SnapshotReason = 'auto' | 'manual' | 'pre-import' | 'pre-merge' | 'pre-upgrade' | 'pre-delete';
 
 export interface SnapshotMeta {
     id: string;
@@ -175,8 +175,8 @@ export async function hasAutoSnapshotOnDay(treeId: string, now: number): Promise
 
 /** Remove every snapshot belonging to a deleted tree (cascade cleanup). */
 export async function deleteSnapshotsForTree(treeId: string): Promise<void> {
-    const all = await StorageManager.getAll<{ id: string; treeId: string }>('snapshots');
+    const all = await StorageManager.getAll<StoredSnapshot>('snapshots');
     for (const snap of all) {
-        if (snap?.treeId === treeId) await StorageManager.delete('snapshots', snap.id);
+        if (snap?.meta?.treeId === treeId) await StorageManager.delete('snapshots', snap.meta.id);
     }
 }

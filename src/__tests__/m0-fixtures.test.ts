@@ -4,6 +4,7 @@ import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { describe, expect, it } from 'vitest';
 import { STROM_DATA_VERSION, type StromData } from '../types.js';
+import { migrateAndValidateData } from '../data.js';
 import { validateTreeData } from '../validation.js';
 
 function fixture(name: string): StromData {
@@ -19,7 +20,8 @@ describe('M0 synthetic fixtures', () => {
         it(`${name} is current, exact-sized, and valid`, () => {
             const data = fixture(name);
             const result = validateTreeData(data);
-            expect(data.version).toBe(STROM_DATA_VERSION);
+            expect(data.version).toBe(5);
+            expect(migrateAndValidateData(data).version).toBe(STROM_DATA_VERSION);
             expect(Object.keys(data.persons)).toHaveLength(expectedPeople);
             expect(result.issues.filter(issue => issue.severity === 'error')).toEqual([]);
         });
@@ -49,12 +51,10 @@ describe('M0 synthetic fixtures', () => {
         expect(Object.keys(data.places ?? {}).length).toBeGreaterThan(0);
     });
 
-    it('records the current more-than-two-parent validator limitation', () => {
+    it('accepts the historical M0 more-than-two-parent fixture after M1', () => {
         const data = fixture('m0-current-limit-multi-parent.json');
         const result = validateTreeData(data);
-        expect(result.valid).toBe(false);
-        expect(result.issues).toEqual(expect.arrayContaining([
-            expect.objectContaining({ severity: 'error', type: 'tooManyParents' }),
-        ]));
+        expect(result.valid).toBe(true);
+        expect(result.issues.some(issue => issue.type === 'tooManyParents')).toBe(false);
     });
 });

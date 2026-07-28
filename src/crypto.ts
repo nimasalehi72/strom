@@ -197,6 +197,7 @@ class CryptoSessionClass {
         // Use provided salt or generate new one
         this.currentSalt = salt || generateRandomBytes(SALT_LENGTH);
         this.derivedKey = await deriveKey(password, this.currentSalt);
+        if (typeof window !== 'undefined') window.dispatchEvent(new CustomEvent('strom:crypto-unlocked'));
     }
 
     /**
