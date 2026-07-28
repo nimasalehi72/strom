@@ -1,0 +1,405 @@
+{
+  "version": 5,
+  "persons": {
+    "m0_grandfather": {
+      "id": "m0_grandfather",
+      "firstName": "رضا",
+      "lastName": "کریمی",
+      "gender": "male",
+      "isPlaceholder": false,
+      "partnerships": [
+        "m0_union_grandparents"
+      ],
+      "parentIds": [],
+      "childIds": [
+        "m0_father",
+        "m0_aunt"
+      ],
+      "birthDate": "1930",
+      "deathDate": "2001",
+      "nameVariants": [
+        "Reza Karimi"
+      ],
+      "isDeceased": true
+    },
+    "m0_grandmother": {
+      "id": "m0_grandmother",
+      "firstName": "مریم",
+      "lastName": "کریمی",
+      "gender": "female",
+      "isPlaceholder": false,
+      "partnerships": [
+        "m0_union_grandparents"
+      ],
+      "parentIds": [],
+      "childIds": [
+        "m0_father",
+        "m0_aunt"
+      ],
+      "birthDate": "~1934",
+      "nameVariants": [
+        "Maryam Karimi",
+        "مریم کريمي"
+      ],
+      "isDeceased": true
+    },
+    "m0_father": {
+      "id": "m0_father",
+      "firstName": "فرید",
+      "lastName": "کریمی",
+      "gender": "male",
+      "isPlaceholder": false,
+      "partnerships": [
+        "m0_union_parents",
+        "m0_union_second_marriage"
+      ],
+      "parentIds": [
+        "m0_grandfather",
+        "m0_grandmother"
+      ],
+      "childIds": [
+        "m0_focus",
+        "m0_sister",
+        "m0_half_brother",
+        "m0_step_child"
+      ],
+      "birthDate": "1956-02",
+      "nameVariants": [
+        "Farid Karimi"
+      ],
+      "sourceIds": [
+        "m0_source_register"
+      ]
+    },
+    "m0_aunt": {
+      "id": "m0_aunt",
+      "firstName": "ناهید",
+      "lastName": "کریمی",
+      "gender": "female",
+      "isPlaceholder": false,
+      "partnerships": [],
+      "parentIds": [
+        "m0_grandfather",
+        "m0_grandmother"
+      ],
+      "childIds": [],
+      "birthDate": "1960"
+    },
+    "m0_unknown_parent": {
+      "id": "m0_unknown_parent",
+      "firstName": "?",
+      "lastName": "",
+      "gender": "male",
+      "isPlaceholder": true,
+      "partnerships": [],
+      "parentIds": [],
+      "childIds": [
+        "m0_mother"
+      ]
+    },
+    "m0_mother": {
+      "id": "m0_mother",
+      "firstName": "لیلا",
+      "lastName": "رضایی",
+      "gender": "female",
+      "isPlaceholder": false,
+      "partnerships": [
+        "m0_union_parents"
+      ],
+      "parentIds": [
+        "m0_unknown_parent"
+      ],
+      "childIds": [
+        "m0_focus",
+        "m0_sister"
+      ],
+      "birthDate": "1960",
+      "nameVariants": [
+        "Leila Rezaei"
+      ]
+    },
+    "m0_stepmother": {
+      "id": "m0_stepmother",
+      "firstName": "مینا",
+      "lastName": "احمدی",
+      "gender": "female",
+      "isPlaceholder": false,
+      "partnerships": [
+        "m0_union_second_marriage"
+      ],
+      "parentIds": [],
+      "childIds": [
+        "m0_half_brother",
+        "m0_step_child"
+      ],
+      "birthDate": "1965"
+    },
+    "m0_focus": {
+      "id": "m0_focus",
+      "firstName": "نیما",
+      "lastName": "کریمی",
+      "gender": "male",
+      "isPlaceholder": false,
+      "partnerships": [
+        "m0_union_focus_partner"
+      ],
+      "parentIds": [
+        "m0_father",
+        "m0_mother"
+      ],
+      "childIds": [
+        "m0_adopted_child",
+        "m0_foster_child"
+      ],
+      "birthDate": "~1985",
+      "birthPlace": "تهران",
+      "nameVariants": [
+        "Nima Karimi",
+        "Nimā Karimi"
+      ],
+      "refn": "M0-FOCUS",
+      "question": "Original Solar Hijri date recorded as ۱۳۶۴/۰۲; conversion unverified.",
+      "notes": "Synthetic mixed-script record. تاریخ اصلی باید بدون حذف شدن حفظ شود.",
+      "photo": "data:image/jpeg;base64,/9j/4AAQSkZJRgABAQAAAQABAAD/2Q==",
+      "photoOriginalName": "synthetic-portrait.jpg",
+      "sourceIds": [
+        "m0_source_register"
+      ],
+      "events": [
+        {
+          "id": "m0_event_occupation",
+          "type": "occupation",
+          "date": ">2005",
+          "place": "تهران",
+          "note": "طراح / Designer",
+          "sourceIds": [
+            "m0_source_letter"
+          ],
+          "participants": [
+            {
+              "id": "m0_participant_1",
+              "role": "witness",
+              "name": "شاهد ساختگی"
+            }
+          ]
+        }
+      ],
+      "attachments": [
+        {
+          "id": "m0_attachment_pdf",
+          "name": "synthetic-letter.pdf",
+          "mimeType": "application/pdf",
+          "dataUrl": "data:application/pdf;base64,JVBERi0xLjQKJSVFT0YK",
+          "sizeBytes": 15,
+          "note": "Synthetic PDF marker",
+          "sourceId": "m0_source_letter"
+        }
+      ]
+    },
+    "m0_sister": {
+      "id": "m0_sister",
+      "firstName": "سارا",
+      "lastName": "کریمی",
+      "gender": "female",
+      "isPlaceholder": false,
+      "partnerships": [],
+      "parentIds": [
+        "m0_father",
+        "m0_mother"
+      ],
+      "childIds": [],
+      "birthDate": "1988"
+    },
+    "m0_half_brother": {
+      "id": "m0_half_brother",
+      "firstName": "آرمان",
+      "lastName": "کریمی",
+      "gender": "male",
+      "isPlaceholder": false,
+      "partnerships": [],
+      "parentIds": [
+        "m0_father",
+        "m0_stepmother"
+      ],
+      "childIds": [],
+      "birthDate": "1995"
+    },
+    "m0_step_child": {
+      "id": "m0_step_child",
+      "firstName": "روژان",
+      "lastName": "کریمی",
+      "gender": "female",
+      "isPlaceholder": false,
+      "partnerships": [],
+      "parentIds": [
+        "m0_father",
+        "m0_stepmother"
+      ],
+      "childIds": [],
+      "birthDate": "1991",
+      "parentRelTypes": {
+        "m0_stepmother": "step"
+      }
+    },
+    "m0_partner": {
+      "id": "m0_partner",
+      "firstName": "امید",
+      "lastName": "صادقی",
+      "gender": "male",
+      "isPlaceholder": false,
+      "partnerships": [
+        "m0_union_focus_partner"
+      ],
+      "parentIds": [],
+      "childIds": [
+        "m0_adopted_child",
+        "m0_foster_child"
+      ],
+      "birthDate": "1984",
+      "nameVariants": [
+        "Omid Sadeghi"
+      ]
+    },
+    "m0_adopted_child": {
+      "id": "m0_adopted_child",
+      "firstName": "هانا",
+      "lastName": "کریمی",
+      "gender": "female",
+      "isPlaceholder": false,
+      "partnerships": [],
+      "parentIds": [
+        "m0_focus",
+        "m0_partner"
+      ],
+      "childIds": [],
+      "birthDate": "2015",
+      "parentRelTypes": {
+        "m0_focus": "adoptive",
+        "m0_partner": "adoptive"
+      }
+    },
+    "m0_foster_child": {
+      "id": "m0_foster_child",
+      "firstName": "سام",
+      "lastName": "کریمی",
+      "gender": "male",
+      "isPlaceholder": false,
+      "partnerships": [],
+      "parentIds": [
+        "m0_focus",
+        "m0_partner"
+      ],
+      "childIds": [],
+      "birthDate": "2017",
+      "parentRelTypes": {
+        "m0_focus": "foster",
+        "m0_partner": "foster"
+      }
+    },
+    "m0_duplicate_candidate": {
+      "id": "m0_duplicate_candidate",
+      "firstName": "Nima",
+      "lastName": "Karimi",
+      "gender": "male",
+      "isPlaceholder": false,
+      "partnerships": [],
+      "parentIds": [],
+      "childIds": [],
+      "birthDate": "~1985",
+      "nameVariants": [
+        "نیما کریمی"
+      ]
+    }
+  },
+  "partnerships": {
+    "m0_union_grandparents": {
+      "id": "m0_union_grandparents",
+      "person1Id": "m0_grandfather",
+      "person2Id": "m0_grandmother",
+      "childIds": [
+        "m0_father",
+        "m0_aunt"
+      ],
+      "status": "married",
+      "startDate": "1954",
+      "startPlace": "تهران",
+      "sourceIds": [
+        "m0_source_register"
+      ]
+    },
+    "m0_union_parents": {
+      "id": "m0_union_parents",
+      "person1Id": "m0_father",
+      "person2Id": "m0_mother",
+      "childIds": [
+        "m0_focus",
+        "m0_sister"
+      ],
+      "status": "divorced",
+      "startDate": "1980",
+      "endDate": "1992",
+      "startPlace": "تهران"
+    },
+    "m0_union_second_marriage": {
+      "id": "m0_union_second_marriage",
+      "person1Id": "m0_father",
+      "person2Id": "m0_stepmother",
+      "childIds": [
+        "m0_half_brother",
+        "m0_step_child"
+      ],
+      "status": "married",
+      "startDate": "1993",
+      "startPlace": "کرج"
+    },
+    "m0_union_focus_partner": {
+      "id": "m0_union_focus_partner",
+      "person1Id": "m0_focus",
+      "person2Id": "m0_partner",
+      "childIds": [
+        "m0_adopted_child",
+        "m0_foster_child"
+      ],
+      "status": "partners",
+      "startDate": "2010",
+      "startPlace": "تهران",
+      "note": "Synthetic same-sex partnership."
+    }
+  },
+  "defaultPersonId": "m0_focus",
+  "sources": {
+    "m0_source_register": {
+      "id": "m0_source_register",
+      "title": "Synthetic family register",
+      "repository": "M0 Test Archive",
+      "reference": "TEST-001",
+      "quality": 3
+    },
+    "m0_source_letter": {
+      "id": "m0_source_letter",
+      "title": "Synthetic bilingual letter",
+      "repository": "M0 Test Archive",
+      "reference": "TEST-002",
+      "quality": 2
+    }
+  },
+  "places": {
+    "تهران": {
+      "lat": 35.6892,
+      "lon": 51.389,
+      "label": "Tehran, Iran"
+    },
+    "کرج": {
+      "lat": 35.84,
+      "lon": 50.9391,
+      "label": "Karaj, Iran"
+    }
+  },
+  "surnameVariants": [
+    [
+      "کریمی",
+      "كريمي",
+      "Karimi"
+    ]
+  ]
+}

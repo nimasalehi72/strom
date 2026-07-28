@@ -1,0 +1,74 @@
+{
+  "version": 5,
+  "persons": {
+    "m0_limit_father": {
+      "id": "m0_limit_father",
+      "firstName": "Parent",
+      "lastName": "One",
+      "gender": "male",
+      "isPlaceholder": false,
+      "partnerships": [
+        "m0_limit_union"
+      ],
+      "parentIds": [],
+      "childIds": [
+        "m0_limit_child"
+      ]
+    },
+    "m0_limit_mother": {
+      "id": "m0_limit_mother",
+      "firstName": "Parent",
+      "lastName": "Two",
+      "gender": "female",
+      "isPlaceholder": false,
+      "partnerships": [
+        "m0_limit_union"
+      ],
+      "parentIds": [],
+      "childIds": [
+        "m0_limit_child"
+      ]
+    },
+    "m0_limit_foster": {
+      "id": "m0_limit_foster",
+      "firstName": "Parent",
+      "lastName": "Three",
+      "gender": "female",
+      "isPlaceholder": false,
+      "partnerships": [],
+      "parentIds": [],
+      "childIds": [
+        "m0_limit_child"
+      ]
+    },
+    "m0_limit_child": {
+      "id": "m0_limit_child",
+      "firstName": "Child",
+      "lastName": "Example",
+      "gender": "male",
+      "isPlaceholder": false,
+      "partnerships": [],
+      "parentIds": [
+        "m0_limit_father",
+        "m0_limit_mother",
+        "m0_limit_foster"
+      ],
+      "childIds": [],
+      "parentRelTypes": {
+        "m0_limit_foster": "foster"
+      }
+    }
+  },
+  "partnerships": {
+    "m0_limit_union": {
+      "id": "m0_limit_union",
+      "person1Id": "m0_limit_father",
+      "person2Id": "m0_limit_mother",
+      "childIds": [
+        "m0_limit_child"
+      ],
+      "status": "married"
+    }
+  },
+  "defaultPersonId": "m0_limit_child"
+}

@@ -13,7 +13,10 @@
     "test:watch": "vitest",
     "test:real": "npx tsx scripts/test-real-data.ts",
     "gen:etalon": "tsx scripts/generate-etalon.ts",
+    "gen:m0-fixtures": "tsx scripts/generate-m0-fixtures.ts",
     "gen:devel-demo": "tsx scripts/generate-devel-demo.ts",
+    "benchmark:m0:data": "tsx scripts/benchmark-m0-data.ts",
+    "benchmark:m0:browser": "tsx scripts/benchmark-m0-browser.ts",
     "test:e2e": "npm run build && playwright test",
     "gen:demo-places": "tsx scripts/geocode-demo.ts"
   },
@@ -28,6 +31,7 @@
     "@playwright/test": "^1.61.1",
     "@types/node": "^25.0.10",
     "esbuild": "^0.27.2",
+    "http-server": "^14.1.1",
     "tsx": "^4.23.0",
     "typescript": "^5.9.3",
     "vitest": "^4.0.17"
